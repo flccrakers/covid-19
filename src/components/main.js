@@ -21,7 +21,7 @@ class Main extends Component {
       isLoading: true,
       countries: [],
       currentData: [],
-      selectedCountry: 100,
+      selectedCountry: 105,
       aggregateCountries: false,
       axes: [
         {primary: true, type: 'ordinal', position: 'bottom'},
@@ -40,14 +40,16 @@ class Main extends Component {
     let filesToProcess = [];
     let countries = [];
     if (aggregate === true) {
-      filesToProcess.concat(aggregateFiles)
+      filesToProcess = aggregateFiles
     } else {
-      filesToProcess.concat(files)
+      filesToProcess = files
     }
-    console.log(filesToProcess);
+    // console.log(filesToProcess);
     let confirmedJson, recoveredJson, deathsJson;
     axios.get(filesToProcess[0]).then(result => {
       confirmedJson = result.data.slice();
+      // console.log(confirmedJson[48]);
+      // console.log(confirmedJson[48].data[confirmedJson[105].data.length-1]);
       countries = this.getCountries(result.data);
       let countryIndex = this.state.selectedCountry;
       if (countryIndex > countries.length) {
@@ -270,6 +272,7 @@ class Main extends Component {
     let count = 0;
     this.state.confirmedJson.forEach(element => {
       count += element.data[element.data.length - 1][1];
+      // console.log(count, element.data[element.data.length - 1], element.label)
     });
 
     return count;
@@ -279,6 +282,7 @@ class Main extends Component {
     let count = 0;
     this.state.recoveredJson.forEach(element => {
       count += element.data[element.data.length - 1][1];
+
     });
 
     return count;
