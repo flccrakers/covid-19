@@ -23,6 +23,7 @@ class Main extends Component {
       currentData: [],
       selectedCountry: 105,
       aggregateCountries: false,
+      data: {},
       axes: [
         {primary: true, type: 'ordinal', position: 'bottom'},
         {type: 'linear', position: 'left'}
@@ -34,39 +35,49 @@ class Main extends Component {
     this.loadJsonFiles(this.state.aggregateCountries);
   }
 
-  loadJsonFiles(aggregate) {
-    let files = ['../COVID-19/confirmed.json', '../COVID-19/recovered.json', '../COVID-19/deaths.json'];
-    let aggregateFiles = ['../COVID-19/aggregate_confirmed.json', '../COVID-19/aggregate_recovered.json', '../COVID-19/aggregate_deaths.json'];
-    let filesToProcess = [];
-    let countries = [];
-    if (aggregate === true) {
-      filesToProcess = aggregateFiles
-    } else {
-      filesToProcess = files
-    }
-    // console.log(filesToProcess);
-    let confirmedJson, recoveredJson, deathsJson;
-    axios.get(filesToProcess[0]).then(result => {
-      confirmedJson = result.data.slice();
-      // console.log(confirmedJson[48]);
-      // console.log(confirmedJson[48].data[confirmedJson[105].data.length-1]);
-      countries = this.getCountries(result.data);
-      let countryIndex = this.state.selectedCountry;
-      if (countryIndex > countries.length) {
-        countryIndex = 100
-      }
-      this.setState({countries, selectedCountry: countryIndex});
-      axios.get(filesToProcess[1]).then(result => {
-        recoveredJson = result.data.slice();
-        axios.get(filesToProcess[2]).then(result => {
-          deathsJson = result.data.slice();
-          this.setState({confirmedJson, recoveredJson, deathsJson, isLoading: false});
-          setTimeout(() => {
-            this.setState({currentData: this.generateCurrentData(countryIndex)})
-          }, 100)
-        });
-      });
-    });
+
+  loadJsonFiles(aggregate, contries) {
+    fetch("https://pomber.github.io/covid19/timeseries.json")
+      .then(response => response.json())
+      .then(data => {
+        // data["Argentina"].forEach(({ date, confirmed, recovered, deaths }) =>
+        //   console.log(`${date} active cases: ${confirmed - recovered - deaths}`)
+        // )
+        let countries = Object.keys(data).sort();
+        this.setState({countries, data, isLoading: false})
+      })
+    // let files = ['../COVID-19/confirmed.json', '../COVID-19/recovered.json', '../COVID-19/deaths.json'];
+    // let aggregateFiles = ['../COVID-19/aggregate_confirmed.json', '../COVID-19/aggregate_recovered.json', '../COVID-19/aggregate_deaths.json'];
+    // let filesToProcess = [];
+    // let countries = [];
+    // if (aggregate === true) {
+    //   filesToProcess = aggregateFiles
+    // } else {
+    //   filesToProcess = files
+    // }
+    // // console.log(filesToProcess);
+    // let confirmedJson, recoveredJson, deathsJson;
+    // axios.get(filesToProcess[0]).then(result => {
+    //   confirmedJson = result.data.slice();
+    //   // console.log(confirmedJson[48]);
+    //   // console.log(confirmedJson[48].data[confirmedJson[105].data.length-1]);
+    //   countries = this.getCountries(result.data);
+    //   let countryIndex = this.state.selectedCountry;
+    //   if (countryIndex > countries.length) {
+    //     countryIndex = 100
+    //   }
+    //   this.setState({countries, selectedCountry: countryIndex});
+    //   axios.get(filesToProcess[1]).then(result => {
+    //     recoveredJson = result.data.slice();
+    //     axios.get(filesToProcess[2]).then(result => {
+    //       deathsJson = result.data.slice();
+    //       this.setState({confirmedJson, recoveredJson, deathsJson, isLoading: false});
+    //       setTimeout(() => {
+    //         this.setState({currentData: this.generateCurrentData(countryIndex)})
+    //       }, 100)
+    //     });
+    //   });
+    // });
 
 
   }
