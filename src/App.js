@@ -6,7 +6,6 @@ function App() {
   return (
     <div style={{display: 'flex', flex: '1 1 auto', height: '100%'}}>
       <Main/>
-
     </div>
   );
 }

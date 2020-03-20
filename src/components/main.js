@@ -1,11 +1,14 @@
 import React, {Component} from 'react';
 import {Chart} from "react-charts";
 import axios from 'axios';
-import {CircularProgress, Select} from "@material-ui/core";
+import {Checkbox, CircularProgress, Select} from "@material-ui/core";
 import FormControl from "@material-ui/core/FormControl";
 import InputLabel from "@material-ui/core/InputLabel";
 import MenuItem from "@material-ui/core/MenuItem";
 import Typography from "@material-ui/core/Typography";
+import IconButton from "@material-ui/core/IconButton";
+import Refresh from '@material-ui/icons/Sync';
+import FormControlLabel from "@material-ui/core/FormControlLabel";
 
 
 class Main extends Component {
@@ -18,7 +21,8 @@ class Main extends Component {
       isLoading: true,
       countries: [],
       currentData: [],
-      selectedCountry: 157,
+      selectedCountry: 100,
+      aggregateCountries: false,
       axes: [
         {primary: true, type: 'ordinal', position: 'bottom'},
         {type: 'linear', position: 'left'}
@@ -27,20 +31,37 @@ class Main extends Component {
   }
 
   componentDidMount() {
-    let confirmedJson, recoveredJson, deathsJson
-    let currentData = this.state.currentData;
-    axios.get("../COVID-19/confirmed.json").then(result => {
+    this.loadJsonFiles(this.state.aggregateCountries);
+  }
+
+  loadJsonFiles(aggregate) {
+    let files = ['../COVID-19/confirmed.json', '../COVID-19/recovered.json', '../COVID-19/deaths.json'];
+    let aggregateFiles = ['../COVID-19/aggregate_confirmed.json', '../COVID-19/aggregate_recovered.json', '../COVID-19/aggregate_deaths.json'];
+    let filesToProcess = [];
+    let countries = [];
+    if (aggregate === true) {
+      filesToProcess.concat(aggregateFiles)
+    } else {
+      filesToProcess.concat(files)
+    }
+    console.log(filesToProcess);
+    let confirmedJson, recoveredJson, deathsJson;
+    axios.get(filesToProcess[0]).then(result => {
       confirmedJson = result.data.slice();
-      currentData.push({label: result.data[157].label + '_confirmed', data: result.data[157].data});
-      let countries = this.getCountries(result.data);
-      this.setState({countries});
-      axios.get("../COVID-19/recovered.json").then(result => {
+      countries = this.getCountries(result.data);
+      let countryIndex = this.state.selectedCountry;
+      if (countryIndex > countries.length) {
+        countryIndex = 100
+      }
+      this.setState({countries, selectedCountry: countryIndex});
+      axios.get(filesToProcess[1]).then(result => {
         recoveredJson = result.data.slice();
-        currentData.push({label: result.data[157].label + '_recovered', data: result.data[157].data});
-        axios.get("../COVID-19/deaths.json").then(result => {
+        axios.get(filesToProcess[2]).then(result => {
           deathsJson = result.data.slice();
-          currentData.push({label: result.data[157].label + '_deaths', data: result.data[157].data});
-          this.setState({confirmedJson, recoveredJson, deathsJson, currentData, isLoading: false})
+          this.setState({confirmedJson, recoveredJson, deathsJson, isLoading: false});
+          setTimeout(() => {
+            this.setState({currentData: this.generateCurrentData(countryIndex)})
+          }, 100)
         });
       });
     });
@@ -71,8 +92,13 @@ class Main extends Component {
   }
 
   render() {
-    console.log(this.state.currentData);
     let data = this.state.currentData;
+    let selectedCountry = this.state.selectedCountry;
+
+    if (selectedCountry > this.state.countries.length) {
+      selectedCountry = 0
+    }
+
     if (this.state.isLoading === true) {
       return this.getLoading();
     }
@@ -93,25 +119,44 @@ class Main extends Component {
           borderRadius: '5px',
         }}>
           <div>
-            <Typography style={{marginLeft: '15px'}} variant={"body2"}>Appuyez sur F5 pour mettre à jour</Typography>
-            <FormControl style={{margin: '15px'}}>
-              <InputLabel id="demo-simple-select-label" style={{color: 'inherit'}}>Choisir un pays</InputLabel>
-              <Select
-                style={{minWidth: '300px', color: "inherit"}}
-                labelId="demo-simple-select-label"
-                id="demo-simple-select"
-                value={this.state.selectedCountry}
-                onChange={this.handleChange}
+            <div style={{display: 'flex', alignItems: 'center'}}>
+              <Typography style={{marginLeft: '15px'}} variant={"body2"}>Hit F5 to reload</Typography>
+              <IconButton aria-label="delete" color={'inherit'} onClick={this.handleRefresh}>
+                <Refresh/>
+              </IconButton>
+            </div>
+            <div style={{display: 'flex', flexDirection: 'column'}}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={this.state.aggregateCountries}
+                    onChange={this.handleChangeAggregate}
+                    name="AggregateCountries"
+                    color="primary"
+                  />
+                }
+                label="Aggregate Countries"
+                style={{marginLeft: '5px'}}
+              />
+              <FormControl style={{margin: '15px'}}>
+                <InputLabel id="demo-simple-select-label" style={{color: 'inherit'}}>Select a country</InputLabel>
+                <Select
+                  style={{minWidth: '300px', color: "inherit"}}
+                  labelId="demo-simple-select-label"
+                  id="demo-simple-select"
+                  value={selectedCountry}
+                  onChange={this.handleChange}
 
-              >
-                {this.state.countries.map((element, index) => {
-                  return (<MenuItem key={index} value={index} color={'inherit'}>{element}</MenuItem>)
-                })}
+                >
+                  {this.state.countries.map((element, index) => {
+                    return (<MenuItem key={index} value={index} color={'inherit'}>{element}</MenuItem>)
+                  })}
 
-              </Select>
-            </FormControl>
+                </Select>
+              </FormControl>
+            </div>
           </div>
-          <div>{this.generateGlobalData()}</div>
+          <div style={{display: 'flex', flex: '1 1 auto'}}>{this.generateGlobalData()}</div>
 
         </div>
         <div style={{backgroundColor: 'rgba(42, 42, 42, 0.9)', padding: '5px', margin: '8px', borderRadius: '5px',}}>
@@ -130,8 +175,9 @@ class Main extends Component {
             background: 'rgba(42, 42, 42, 0.9)',
             padding: '.5rem',
             borderRadius: '5px',
-            maxWidth: window.innerWidth + "px",
-            height: '90%'
+            maxWidth: (window.innerWidth - 25) + "px",
+            maxHeight: (window.innerWidth - 186) + "px",
+            // height: '90%'
           }}
         >
           <Chart data={data} axes={this.state.axes} tooltip dark/>
@@ -144,6 +190,15 @@ class Main extends Component {
     this.setState({selectedCountry: event.target.value, currentData: this.generateCurrentData(event.target.value)})
   };
 
+  handleRefresh = event => {
+    this.setState({currentData: this.generateCurrentData(this.state.selectedCountry)})
+  };
+
+  handleChangeAggregate = event => {
+    this.setState({aggregateCountries: event.target.checked});
+    this.loadJsonFiles(event.target.checked);
+  };
+
   getLoading() {
     return (
       <div style={{
@@ -154,7 +209,7 @@ class Main extends Component {
         color: '#3c3c3c',
         flexDirection: 'column'
       }}>
-        <CircularProgress size={150} thickness={2} color={'inherit'}/>
+        <CircularProgress size={150} thickness={2} color={"primary"}/>
         <Typography style={{marginTop: '15px'}} variant={"h5"}>Loading...</Typography>
       </div>
     );
@@ -174,7 +229,7 @@ class Main extends Component {
     };
     let boxStyleGreen = {...boxStyleRed, color: 'green'};
     let boxStyleWhite = {...boxStyleRed, color: '#fff'};
-    return (<div style={{display: 'flex'}}>
+    return (<div style={{display: 'flex', flex: '1 1 auto'}}>
       <div style={boxStyleRed}>
         <Typography variant={"h6"} style={{color: '#fff'}}>Local confirmed</Typography>
         <Typography variant={"h2"}>{this.getConfirmedSelected().toLocaleString(language)}</Typography>
@@ -187,7 +242,7 @@ class Main extends Component {
         <Typography variant={"h6"} style={{color: '#fff'}}>Local death</Typography>
         <Typography variant={"h2"}>{this.getDeathSelected().toLocaleString(language)}</Typography>
       </div>
-      <div style={{display: 'flex', flex: '1 1 auto'}}></div>
+      <div style={{display: 'flex', flex: '1 1 auto'}}/>
       <div style={boxStyleRed}>
         <Typography variant={"h6"} style={{color: '#fff'}}>Total confirmed</Typography>
         <Typography variant={"h2"}>{this.getConfirmedGlobal().toLocaleString(language)}</Typography>
@@ -205,7 +260,7 @@ class Main extends Component {
   }
 
   getLanguage() {
-    if (navigator.languages != undefined)
+    if (navigator.languages !== undefined)
       return navigator.languages[0];
     else
       return navigator.language
@@ -217,7 +272,6 @@ class Main extends Component {
       count += element.data[element.data.length - 1][1];
     });
 
-    console.log(count);
     return count;
   }
 
@@ -227,7 +281,6 @@ class Main extends Component {
       count += element.data[element.data.length - 1][1];
     });
 
-    console.log(count);
     return count;
   }
 
@@ -237,7 +290,6 @@ class Main extends Component {
       count += element.data[element.data.length - 1][1];
     });
 
-    console.log(count);
     return count;
   }
 
