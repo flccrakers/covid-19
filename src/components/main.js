@@ -260,7 +260,7 @@ class Main extends Component {
     let language = this.getLanguage();
     let boxStyleRed = {
       display: 'flex',
-      color: 'red',
+      color: '#42b4e9',
       alignItems: 'center',
       flexDirection: 'column',
       margin: "0 8px",
@@ -268,8 +268,8 @@ class Main extends Component {
       borderRadius: '5px',
       padding: '8px'
     };
-    let boxStyleGreen = {...boxStyleRed, color: 'green'};
-    let boxStyleWhite = {...boxStyleRed, color: '#fff'};
+    let boxStyleGreen = {...boxStyleRed, color: '#e0d56a'};
+    let boxStyleWhite = {...boxStyleRed, color: '#fb8283'};
     return (<div style={{display: 'flex', flex: '1 1 auto'}}>
       <div style={boxStyleRed}>
         <Typography variant={"h6"} style={{color: '#fff'}}>Local confirmed</Typography>
