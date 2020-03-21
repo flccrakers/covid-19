@@ -20,10 +20,14 @@ class Main extends Component {
       recoveredJson: undefined,
       isLoading: true,
       countries: [],
+      aggregateCountryList: [],
+      currentCountries: [],
       currentData: [],
-      selectedCountry: 105,
+      selectedCountry: 'France / France',
+      previousSelectedCountry: 'France / France',
       aggregateCountries: false,
       data: {},
+      aggregateData: {},
       axes: [
         {primary: true, type: 'ordinal', position: 'bottom'},
         {type: 'linear', position: 'left'}
@@ -36,16 +40,47 @@ class Main extends Component {
   }
 
 
-  loadJsonFiles(aggregate, contries) {
-    fetch("https://pomber.github.io/covid19/timeseries.json")
-      .then(response => response.json())
-      .then(data => {
-        // data["Argentina"].forEach(({ date, confirmed, recovered, deaths }) =>
-        //   console.log(`${date} active cases: ${confirmed - recovered - deaths}`)
-        // )
-        let countries = Object.keys(data).sort();
-        this.setState({countries, data, isLoading: false})
-      })
+  loadJsonFiles() {
+    axios.get('../COVID-19/data.json').then(result => {
+      let data = result.data;
+      let countries = Object.keys(data).sort();
+      axios.get('../COVID-19/aggregate_data.json').then(aggregateResult => {
+        let aggregateData = aggregateResult.data;
+        let aggregateCountryList = Object.keys(aggregateData).sort();
+        this.setState({
+          countries,
+          currentCountries: countries,
+          aggregateCountryList,
+          data,
+          aggregateData,
+          isLoading: false,
+          currentData: this.generateCurrentData('France / France', data)
+        })
+
+      });
+
+    });
+  }
+
+  generateCurrentData(country, data) {
+    let jsonData = data[country];
+    let currentData = [];
+    let confirmed = [];
+    let deaths = [];
+    let recovered = [];
+    jsonData.forEach(element => {
+      confirmed.push([element.date, element.confirmed]);
+      deaths.push([element.date, element.deaths]);
+      recovered.push([element.date, element.recovered]);
+
+    });
+    currentData = [
+      {label: country + ' confirmed', data: confirmed},
+      {label: country + ' deaths', data: deaths},
+      {label: country + ' recovered', data: recovered},
+    ];
+    return currentData;
+
     // let files = ['../COVID-19/confirmed.json', '../COVID-19/recovered.json', '../COVID-19/deaths.json'];
     // let aggregateFiles = ['../COVID-19/aggregate_confirmed.json', '../COVID-19/aggregate_recovered.json', '../COVID-19/aggregate_deaths.json'];
     // let filesToProcess = [];
@@ -82,35 +117,8 @@ class Main extends Component {
 
   }
 
-  getCountries(data) {
-    let countries = [];
-    data.forEach(element => {
-      countries.push(element.label);
-    });
-    return countries
-  }
-
-  generateCurrentData(index) {
-    let currentData = [];
-    let confirmed = this.state.confirmedJson[index];
-    let deaths = this.state.deathsJson[index];
-    let recovered = this.state.recoveredJson[index];
-    currentData = [
-      {label: confirmed.label + '_confirmed', data: confirmed.data},
-      {label: deaths.label + '_deaths', data: deaths.data},
-      {label: recovered.label + '_recovered', data: recovered.data},
-    ];
-    return currentData;
-
-  }
-
   render() {
-    let data = this.state.currentData;
     let selectedCountry = this.state.selectedCountry;
-
-    if (selectedCountry > this.state.countries.length) {
-      selectedCountry = 0
-    }
 
     if (this.state.isLoading === true) {
       return this.getLoading();
@@ -161,8 +169,8 @@ class Main extends Component {
                   onChange={this.handleChange}
 
                 >
-                  {this.state.countries.map((element, index) => {
-                    return (<MenuItem key={index} value={index} color={'inherit'}>{element}</MenuItem>)
+                  {this.state.currentCountries.map((element, index) => {
+                    return (<MenuItem key={index} value={element} color={'inherit'}>{element}</MenuItem>)
                   })}
 
                 </Select>
@@ -193,23 +201,43 @@ class Main extends Component {
             // height: '90%'
           }}
         >
-          <Chart data={data} axes={this.state.axes} tooltip dark/>
+          <Chart data={this.state.currentData} axes={this.state.axes} tooltip dark/>
         </div>
       </div>
     )
   }
 
   handleChange = event => {
-    this.setState({selectedCountry: event.target.value, currentData: this.generateCurrentData(event.target.value)})
+    this.setState({
+      selectedCountry: event.target.value,
+      currentData: this.generateCurrentData(event.target.value, this.state.aggregateCountries === true ? this.state.aggregateData : this.state.data)
+    })
   };
 
   handleRefresh = event => {
-    this.setState({currentData: this.generateCurrentData(this.state.selectedCountry)})
+    this.setState({currentData: this.generateCurrentData(this.state.selectedCountry, this.state.aggregateCountries === true ? this.state.aggregateData : this.state.data)})
   };
 
   handleChangeAggregate = event => {
-    this.setState({aggregateCountries: event.target.checked});
-    this.loadJsonFiles(event.target.checked);
+    let selectedCountry = this.state.selectedCountry;
+    let currentCountries = this.state.currentCountries;
+    let previousSelectedCountry = this.state.previousSelectedCountry;
+    if (selectedCountry.includes(' / ') === true && event.target.checked === true) {
+      previousSelectedCountry = selectedCountry;
+      selectedCountry = selectedCountry.split(' / ')[0];
+      currentCountries = this.state.aggregateCountryList;
+
+    } else {
+      currentCountries = this.state.countries;
+      selectedCountry = this.state.previousSelectedCountry
+    }
+    this.setState({
+      selectedCountry,
+      previousSelectedCountry,
+      currentCountries,
+      aggregateCountries: event.target.checked,
+      currentData: this.generateCurrentData(selectedCountry, event.target.checked === true ? this.state.aggregateData : this.state.data)
+    });
   };
 
   getLoading() {
@@ -279,49 +307,65 @@ class Main extends Component {
       return navigator.language
   }
 
+  getDataForGlobal() {
+    let jsonData = this.state.data;
+    if (this.state.aggregateCountries === true) {
+      jsonData = this.state.aggregateData;
+    }
+    return jsonData[jsonData.length - 1]
+  }
+
   getConfirmedGlobal() {
+    let jsonData = this.state.data;
     let count = 0;
-    this.state.confirmedJson.forEach(element => {
-      count += element.data[element.data.length - 1][1];
-      // console.log(count, element.data[element.data.length - 1], element.label)
+    Object.keys(jsonData).forEach(country => {
+      count += jsonData[country][jsonData[country].length - 1].confirmed
     });
 
     return count;
   }
 
   getRecoverGlobal() {
+    let jsonData = this.state.data;
     let count = 0;
-    this.state.recoveredJson.forEach(element => {
-      count += element.data[element.data.length - 1][1];
-
+    Object.keys(jsonData).forEach(country => {
+      count += jsonData[country][jsonData[country].length - 1].recovered
     });
+
 
     return count;
   }
 
   getDeathGlobal() {
+    let jsonData = this.state.data;
     let count = 0;
-    this.state.deathsJson.forEach(element => {
-      count += element.data[element.data.length - 1][1];
+    Object.keys(jsonData).forEach(country => {
+      count += jsonData[country][jsonData[country].length - 1].deaths
     });
+
 
     return count;
   }
 
+  getDataForSelected() {
+    let jsonData = this.state.data[this.state.selectedCountry];
+    if (this.state.aggregateCountries === true) {
+      jsonData = this.state.aggregateData[this.state.selectedCountry];
+    }
+    return jsonData[jsonData.length - 1]
+  }
+
   getConfirmedSelected() {
-    let length = this.state.confirmedJson[this.state.selectedCountry].data.length;
-    return this.state.confirmedJson[this.state.selectedCountry].data[length - 1][1]
+    return this.getDataForSelected().confirmed;
   }
 
   getRecoverSelected() {
-    let length = this.state.recoveredJson[this.state.selectedCountry].data.length;
-    return this.state.recoveredJson[this.state.selectedCountry].data[length - 1][1]
+    return this.getDataForSelected().recovered;
 
   }
 
   getDeathSelected() {
-    let length = this.state.deathsJson[this.state.selectedCountry].data.length;
-    return this.state.deathsJson[this.state.selectedCountry].data[length - 1][1]
+    return this.getDataForSelected().deaths;
   }
 
 }
