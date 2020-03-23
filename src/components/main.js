@@ -23,8 +23,8 @@ class Main extends Component {
       aggregateCountryList: [],
       currentCountries: [],
       currentData: [],
-      selectedCountry: 'France / France',
-      previousSelectedCountry: 'France / France',
+      selectedCountry: 'France',
+      previousSelectedCountry: 'France',
       aggregateCountries: false,
       data: {},
       aggregateData: {},
@@ -54,7 +54,7 @@ class Main extends Component {
           data,
           aggregateData,
           isLoading: false,
-          currentData: this.generateCurrentData('France / France', data)
+          currentData: this.generateCurrentData('France', data)
         })
 
       });
@@ -252,13 +252,14 @@ class Main extends Component {
       }}>
         <CircularProgress size={150} thickness={2} color={"primary"}/>
         <Typography style={{marginTop: '15px'}} variant={"h5"}>Loading...</Typography>
+        <Typography style={{marginTop: '15px'}} variant={"h5"}>Hit MAJ-F5 if it's not loading</Typography>
       </div>
     );
   }
 
   generateGlobalData() {
     let language = this.getLanguage();
-    let boxStyleRed = {
+    let boxStyleBlue = {
       display: 'flex',
       color: '#42b4e9',
       alignItems: 'center',
@@ -268,33 +269,21 @@ class Main extends Component {
       borderRadius: '5px',
       padding: '8px'
     };
-    let boxStyleGreen = {...boxStyleRed, color: '#e0d56a'};
-    let boxStyleWhite = {...boxStyleRed, color: '#fb8283'};
+    let boxStyleYellow = {...boxStyleBlue, color: '#e0d56a'};
+    let boxStyleRed = {...boxStyleBlue, color: '#fb8283'};
     return (<div style={{display: 'flex', flex: '1 1 auto'}}>
-      <div style={boxStyleRed}>
-        <Typography variant={"h6"} style={{color: '#fff'}}>Local confirmed</Typography>
-        <Typography variant={"h2"}>{this.getConfirmedSelected().toLocaleString(language)}</Typography>
+      <div style={boxStyleBlue}>
+        <Typography variant={"h6"} style={{color: '#fff'}}>Local</Typography>
+        <div style={{display:'flex', alignItems:'center'}}><span color={{color:'#fff'}}>death</span><Typography variant={"h3"} style={{color:"#42b4e9"}}>{this.getConfirmedSelected().toLocaleString(language)}</Typography></div>
+        <Typography variant={"h3"} style={{color:"#fb8283"}}>{this.getDeathSelected().toLocaleString(language)}</Typography>
+        <Typography variant={"h3"} style={{color:"#e0d56a"}}>{this.getRecoverSelected().toLocaleString(language)}</Typography>
       </div>
-      <div style={boxStyleGreen}>
-        <Typography variant={"h6"} style={{color: '#fff'}}>Local recovered</Typography>
-        <Typography variant={"h2"}>{this.getRecoverSelected().toLocaleString(language)}</Typography>
-      </div>
-      <div style={boxStyleWhite}>
-        <Typography variant={"h6"} style={{color: '#fff'}}>Local death</Typography>
-        <Typography variant={"h2"}>{this.getDeathSelected().toLocaleString(language)}</Typography>
-      </div>
-      <div style={{display: 'flex', flex: '1 1 auto'}}/>
-      <div style={boxStyleRed}>
-        <Typography variant={"h6"} style={{color: '#fff'}}>Total confirmed</Typography>
-        <Typography variant={"h2"}>{this.getConfirmedGlobal().toLocaleString(language)}</Typography>
-      </div>
-      <div style={boxStyleGreen}>
-        <Typography variant={"h6"} style={{color: '#fff'}}>Total recovered</Typography>
-        <Typography variant={"h2"}>{this.getRecoverGlobal().toLocaleString(language)}</Typography>
-      </div>
-      <div style={boxStyleWhite}>
-        <Typography variant={"h6"} style={{color: '#fff'}}>Total death</Typography>
-        <Typography variant={"h2"}>{this.getDeathGlobal().toLocaleString(language)}</Typography>
+
+      <div style={boxStyleBlue}>
+        <Typography variant={"h6"} style={{color: '#fff'}}>Global</Typography>
+        <Typography variant={"h3"} style={{color:"#42b4e9"}}>{this.getConfirmedGlobal().toLocaleString(language)}</Typography>
+        <Typography variant={"h3"} style={{color:"#fb8283"}}>{this.getDeathGlobal().toLocaleString(language)}</Typography>
+        <Typography variant={"h3"} style={{color:"#e0d56a"}}>{this.getRecoverGlobal().toLocaleString(language)}</Typography>
       </div>
 
     </div>)
