@@ -261,7 +261,7 @@ class Main extends Component {
     let language = this.getLanguage();
     let boxStyleBlue = {
       display: 'flex',
-      color: '#42b4e9',
+      color: '#fff',
       alignItems: 'center',
       flexDirection: 'column',
       margin: "0 8px",
@@ -273,17 +273,17 @@ class Main extends Component {
     let boxStyleRed = {...boxStyleBlue, color: '#fb8283'};
     return (<div style={{display: 'flex', flex: '1 1 auto'}}>
       <div style={boxStyleBlue}>
-        <Typography variant={"h6"} style={{color: '#fff'}}>Local</Typography>
-        <div style={{display:'flex', alignItems:'center'}}><span color={{color:'#fff'}}>death</span><Typography variant={"h3"} style={{color:"#42b4e9"}}>{this.getConfirmedSelected().toLocaleString(language)}</Typography></div>
-        <Typography variant={"h3"} style={{color:"#fb8283"}}>{this.getDeathSelected().toLocaleString(language)}</Typography>
-        <Typography variant={"h3"} style={{color:"#e0d56a"}}>{this.getRecoverSelected().toLocaleString(language)}</Typography>
+        <Typography variant={"h4"} style={{color: '#fff'}}>Local</Typography>
+        <span>confirmed:</span><Typography variant={"h4"} style={{color:"#42b4e9"}}>{this.getConfirmedSelected().toLocaleString(language)}</Typography>
+        <span>deaths:</span><Typography variant={"h4"} style={{color:"#fb8283"}}>{this.getDeathSelected().toLocaleString(language)}</Typography>
+        <span>recovered:</span><Typography variant={"h4"} style={{color:"#e0d56a"}}>{this.getRecoverSelected().toLocaleString(language)}</Typography>
       </div>
 
       <div style={boxStyleBlue}>
-        <Typography variant={"h6"} style={{color: '#fff'}}>Global</Typography>
-        <Typography variant={"h3"} style={{color:"#42b4e9"}}>{this.getConfirmedGlobal().toLocaleString(language)}</Typography>
-        <Typography variant={"h3"} style={{color:"#fb8283"}}>{this.getDeathGlobal().toLocaleString(language)}</Typography>
-        <Typography variant={"h3"} style={{color:"#e0d56a"}}>{this.getRecoverGlobal().toLocaleString(language)}</Typography>
+        <Typography variant={"h4"} style={{color: '#fff'}}>Global</Typography>
+        <span>confirmed:</span> <Typography variant={"h4"} style={{color:"#42b4e9"}}>{this.getConfirmedGlobal().toLocaleString(language)}</Typography>
+        <span>deaths:</span><Typography variant={"h4"} style={{color:"#fb8283"}}>{this.getDeathGlobal().toLocaleString(language)}</Typography>
+        <span>recovered:</span><Typography variant={"h4"} style={{color:"#e0d56a"}}>{this.getRecoverGlobal().toLocaleString(language)}</Typography>
       </div>
 
     </div>)
